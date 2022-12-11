@@ -7,6 +7,7 @@
 resource "aws_instance" "t2_instance" {
   count                       = 5
   ami                         = "ami-061dbd1209944525c"
+  key_name                    = "standalone8415"
   instance_type               = "t2.micro"
   associate_public_ip_address = true
 #  user_data = templatefile("../scripts/instance-config.sh.tftpl", {
