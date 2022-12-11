@@ -2,23 +2,17 @@
 # network.tf
 # Terraform configuration relative to networking configuration
 
-# Custom virtual private cloud for private addresses behind the load balancer
+# Custom virtual private cloud for private addresses behind the proxy
 resource "aws_vpc" "vpc" {
   cidr_block         = "10.0.0.0/16"
   enable_dns_support = true
 }
 
-# Defining one subnet per target group to satisfy the requirement to have machines in us-east-1a et 1b
-resource "aws_subnet" "cluster1_subnet" {
+# Defining one subnet in the vpc
+resource "aws_subnet" "final_subnet" {
   vpc_id            = aws_vpc.vpc.id
   cidr_block        = "10.0.1.0/24"
   availability_zone = "us-east-1a"
-}
-
-resource "aws_subnet" "cluster2_subnet" {
-  vpc_id            = aws_vpc.vpc.id
-  cidr_block        = "10.0.2.0/24"
-  availability_zone = "us-east-1b"
 }
 
 # Virtual private cloud configuration
@@ -44,18 +38,13 @@ resource "aws_route_table" "public_rt" {
   }
 }
 
-resource "aws_route_table_association" "rt_a_cluster1" {
-  subnet_id      = aws_subnet.cluster1_subnet.id
+resource "aws_route_table_association" "rt_final_cluster" {
+  subnet_id      = aws_subnet.final_subnet.id
   route_table_id = aws_route_table.public_rt.id
 }
 
-resource "aws_route_table_association" "rt_a_cluster2" {
-  subnet_id      = aws_subnet.cluster2_subnet.id
-  route_table_id = aws_route_table.public_rt.id
-}
-
-# Security group rules to allow ssh and http on the load balancer from all addresses
-resource "aws_security_group" "flask_sg" {
+# Security group rules to allow ssh and http on the vpc from all addresses
+resource "aws_security_group" "final_sg" {
   name   = "FLASK and SSH"
   vpc_id = aws_vpc.vpc.id
 
