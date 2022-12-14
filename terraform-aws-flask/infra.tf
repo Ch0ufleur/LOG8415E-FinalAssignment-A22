@@ -6,9 +6,9 @@
 
 resource "aws_instance" "t2_instance" {
   count                       = 5
-  ami                         = "ami-061dbd1209944525c"
-  key_name                    = "standalone8415"
-  instance_type               = "t2.micro"
+  ami                         = "ami-0a6b2839d44d781b2"
+  key_name                    = "standa2"
+  instance_type               = "t2.large"
   associate_public_ip_address = true
 #  user_data = templatefile("../scripts/instance-config.sh.tftpl", {
 #    number = count.index + 5

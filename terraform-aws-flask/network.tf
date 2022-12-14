@@ -49,17 +49,10 @@ resource "aws_security_group" "final_sg" {
   vpc_id = aws_vpc.vpc.id
 
   ingress {
-    from_port   = 80
-    to_port     = 5000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = ["184.162.247.112/32"]
   }
   
   ingress {
@@ -67,6 +60,48 @@ resource "aws_security_group" "final_sg" {
     to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = ["184.162.247.112/32"]
+  }
+  
+  ingress {
+    from_port   = 3306
+    to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 1186
+    to_port     = 1186
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 11860
+    to_port     = 11860
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 33060
+    to_port     = 33060
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 8081
+    to_port     = 8081
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 3316
+    to_port     = 3316
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
   }
 
 
