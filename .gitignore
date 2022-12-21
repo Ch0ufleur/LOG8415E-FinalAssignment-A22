@@ -1,6 +1,6 @@
 # Local .terraform directories
 **/.terraform/*
-tcp-proxy/venv/*
+
 # .tfstate files
 *.tfstate
 *.tfstate.*
