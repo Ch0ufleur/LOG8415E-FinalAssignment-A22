@@ -79,7 +79,7 @@ def random():
     """
     query:str = request.args.get('query')
     print(query)
-    response = app.response_class(response=do_query_random(query), status=200, mimetype='application/text')
+    response = app.response_class(response=do_query_random(query), status=200, mimetype='text/html')
     return response
 
 @app.route("/ping", methods=['GET'])
@@ -94,7 +94,7 @@ def ping():
     """
     query:str = request.args.get('query')
     print(query)
-    response = app.response_class(response=do_query_ping(query), status=200, mimetype='application/text')
+    response = app.response_class(response=do_query_ping(query), status=200, mimetype='text/html')
     return response
 
 if __name__ == '__main__':
@@ -112,12 +112,6 @@ if __name__ == '__main__':
     app = create_app(m,n2,n3,n4)
     app.run(debug=True)
 
-
-
-
-
-
-
 def do_query_random(q:str):
     """
     Performs the query on a random data node.
@@ -130,19 +124,23 @@ def do_query_random(q:str):
     """
     if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
         return do_query_default(q)
-    server = SSHTunnelForwarder(
-        'alfa.8iq.dev',
-        ssh_username="pahaz",
-        ssh_password="secret",
-        remote_bind_address=('127.0.0.1', 8080)
-    )
-    connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+    node_id = str(random.randInt(2,5)) # Values from 2 to 4 inclusive
+    print("selected data node ",node_id, " at random")
     query_result = ''
-    with connection:
-        with connection.cursor() as cursor:
-            cursor.execute(q)
-            query_result = cursor.fetchall()
-        connection.commit()
+    with sshtunnel.open_tunnel(
+        (app.config['master_ip'], 22),
+        ssh_username="ubuntu",
+        ssh_pkey="/home/ubuntu/standa2.pem",
+        remote_bind_address=(?, 22),
+        local_bind_address=('0.0.0.0', 10022)
+    ) as tunnel:
+        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=?)
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(q)
+                query_result = cursor.fetchall()
+            connection.commit()
+    
     return str(query_result)
 
 def do_query_ping(q:str):
@@ -167,25 +165,3 @@ def do_query_ping(q:str):
     with connection:
         with connection.cursor() as cursor:
             a
-"""
-def select_random():
-
-def select_minimal_ping():
-
-from sshtunnel import open_tunnel
-from time import sleep
-
-with open_tunnel(
-    ('localhost', 2222),
-    ssh_username="vagrant",
-    ssh_password="vagrant",
-    remote_bind_address=('127.0.0.1', 3306)
-) as server:
-
-    print(server.local_bind_port)
-    while True:
-        # press Ctrl-C for stopping
-        sleep(1)
-
-print('FINISH!')https://pymysql.readthedocs.io/en/latest/user/examples.html
-https://pypi.org/project/sshtunnel/"""
