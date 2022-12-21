@@ -64,7 +64,7 @@ def proxy_handler(client_socket, remote_host, remote_port, receive_first):
 
     # Establish a connection to the remote host
     remote_socket.connect((remote_host, remote_port))
-
+    print("[==>] Connected to "+remote_host+":"+remote_port+"")
     # intercept the response before it's received
     if receive_first:
         # receive data from the connection and return a buffer
