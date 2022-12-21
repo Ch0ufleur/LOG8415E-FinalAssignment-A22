@@ -1,4 +1,4 @@
-# LOG8415E - Assignment 1
+# LOG8415E - Assignment FINAL
 # network.tf
 # Terraform configuration relative to networking configuration
 
@@ -41,6 +41,33 @@ resource "aws_route_table" "public_rt" {
 resource "aws_route_table_association" "rt_final_cluster" {
   subnet_id      = aws_subnet.final_subnet.id
   route_table_id = aws_route_table.public_rt.id
+}
+
+# Security group for the proxy instance
+resource "aws_security_group" "proxy" {
+  name   = "FLASK-proxy"
+  vpc_id = aws_vpc.vpc.id
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["184.162.247.112/32"]
+  }
+  
+  ingress {
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = -1
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
 
 # Security group rules to allow ssh and http on the vpc from all addresses

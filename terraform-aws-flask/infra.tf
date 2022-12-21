@@ -10,9 +10,16 @@ resource "aws_instance" "t2_instance" {
   key_name                    = "standa2"
   instance_type               = "t2.large"
   associate_public_ip_address = true
-#  user_data = templatefile("../scripts/instance-config.sh.tftpl", {
-#    number = count.index + 5
-#  })
   subnet_id              = aws_subnet.final_subnet.id
   vpc_security_group_ids = [aws_security_group.final_sg.id]
+}
+
+resource "aws_instance" "t2_instance_proxy" {
+  count                       = 1
+  ami                         = "ami-0a6b2839d44d781b2"
+  key_name                    = "standa2"
+  instance_type               = "t2.large"
+  associate_public_ip_address = true
+  subnet_id              = aws_subnet.final_subnet.id
+  vpc_security_group_ids = [aws_security_group.proxy.id]
 }
