@@ -1,11 +1,13 @@
 # LOG8415E - Final assignment
 # Author: Jimmy Bell
-# 
+# Flask server acting as a proxy with REST implementation
 
 from flask import Flask
 from flask import request
 import pymysql
 from sshtunnel import SSHTunnelForwarder
+
+app = Flask(__name__)
 
 # https://stackoverflow.com/a/48349994/13775984
 def create_app(master_ip, node2_ip, node3_ip, node4_ip):
@@ -21,13 +23,32 @@ def create_app(master_ip, node2_ip, node3_ip, node4_ip):
     Returns:
     app: The instantiated and properly configured app
     """
-    app = Flask(__name__)
     app.config['master_ip'] = master_ip
     app.config['node2_ip'] = node2_ip
     app.config['node3_ip'] = node3_ip
     app.config['node4_ip'] = node4_ip
     print('Proxy configured with following IPs: master: ', app.config['master_ip'], ' node2: ', app.config['node2_ip'], ' node3: ', app.config['node3_ip'], ' node4: ', app.config['node4_ip'])
     return app
+
+@app.route("/default", methods=['GET'])
+def default():
+    query:str = request.args.get('query')
+    response = app.response_class(response='a', status=200, mimetype='text/html')
+    return response
+
+@app.route("/random", methods=['GET'])
+def random():
+    query:str = request.args.get('query')
+    print(query)
+    response = app.response_class(response=do_query_random(query), status=200, mimetype='application/text')
+    return response
+
+@app.route("/ping", methods=['GET'])
+def  ping():
+    query:str = request.args.get('query')
+    print(query)
+    response = app.response_class(response=do_query_ping(query), status=200, mimetype='application/text')
+    return response
 
 if __name__ == '__main__':
   from argparse import ArgumentParser
@@ -42,28 +63,11 @@ if __name__ == '__main__':
   n3 = args.n3
   n4 = args.n4
   app = create_app(m,n2,n3,n4)
-  app.run()
+  app.run(debug=True)
 
-@app.route("/default", methods=['GET'])
-def sql_query():
-    query:str = request.args.get('query')
-    print(query)
-    response = app.response_class(reponse=do_query_default(query), status=200, mimetype='application/text')
-    return response
 
-@app.route("/random", methods=['GET'])
-def sql_query():
-    query:str = request.args.get('query')
-    print(query)
-    response = app.response_class(reponse=do_query_random(query), status=200, mimetype='application/text')
-    return response
 
-@app.route("/ping", methods=['GET'])
-def sql_query():
-    query:str = request.args.get('query')
-    print(query)
-    response = app.response_class(reponse=do_query_ping(query), status=200, mimetype='application/text')
-    return response
+
 
 def do_query_default(q:str):
     server = SSHTunnelForwarder(
