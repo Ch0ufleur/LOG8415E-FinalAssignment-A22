@@ -128,18 +128,22 @@ def do_query_random(q:str):
     print("selected data node ",node_id, " at random")
     query_result = ''
     with sshtunnel.open_tunnel(
-        (app.config['master_ip'], 22),
+        (app.config['node'+node_id+'_ip'], 22),
         ssh_username="ubuntu",
         ssh_pkey="/home/ubuntu/standa2.pem",
-        remote_bind_address=(?, 22),
-        local_bind_address=('0.0.0.0', 10022)
+        remote_bind_address=(app.config['master_ip'], 3306)
     ) as tunnel:
-        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=?)
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect('127.0.0.1', 10022)
+        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
         with connection:
             with connection.cursor() as cursor:
                 cursor.execute(q)
                 query_result = cursor.fetchall()
             connection.commit()
+        client.close()
     
     return str(query_result)
 
