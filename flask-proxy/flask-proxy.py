@@ -137,7 +137,7 @@ def do_query_ping(q:str):
     Returns:
     query_result: the result of the query
     """
-    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
+    if 'select'!=q[0:6].lower(): # If it is not a select, then we perform on the master node
         return do_query_default(q)
 
     response_list_n2 = ping(app.config['node2_ip'], size=40, count=2)
