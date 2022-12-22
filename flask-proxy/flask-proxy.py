@@ -79,33 +79,28 @@ def do_query_random(q:str):
     Returns:
     query_result: the result of the query
     """
-    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
+    if 'select'!=q[0:6].lower(): # If it is not a select, then we perform on the master node
         return do_query_default(q)
-    node_id = str(random.randInt(2,5)) # Values from 2 to 4 inclusive
+    node_id = str(random.randint(2,4)) # Values from 2 to 4 inclusive
     print("selected data node ",node_id, " at random")
     query_result = ''
-    with sshtunnel.open_tunnel(
+    with SSHTunnelForwarder(
         (app.config['node'+node_id+'_ip'], 22),
         ssh_username="ubuntu",
         ssh_pkey="/home/ubuntu/standa2.pem",
         remote_bind_address=(app.config['master_ip'], 3306)
     ) as tunnel:
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect('127.0.0.1', 10022)
-        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
+        connection = pymysql.connect(host=app.config['master_ip'], port=tunnel.local_bind_port, user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
         with connection:
             with connection.cursor() as cursor:
                 cursor.execute(q)
                 query_result = cursor.fetchall()
             connection.commit()
-        client.close()
     
     return str(query_result)
-    
+
 @app.route("/random", methods=['GET'])
-def random():
+def randomize():
     """
     Route for Random proxy implementation
     
