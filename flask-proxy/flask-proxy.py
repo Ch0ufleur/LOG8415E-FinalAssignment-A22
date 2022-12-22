@@ -127,7 +127,7 @@ def randomize():
     response = app.response_class(response=do_query_random(query), status=200, mimetype='text/html')
     return response
 
-def ping(node_ip):
+def ping_instance(node_ip):
     response = subprocess.run(["ping", "-c", "1", node_ip], capture_output=True)
     output = response.stdout.decode("utf-8")
     response_time = output.split("time=")[1].split(" ms")[0]
@@ -146,14 +146,14 @@ def do_query_ping(q:str):
     if 'select'!=q[0:6].lower(): # If it is not a select, then we perform on the master node
         return do_query_default(q)
 
-    smallest_ping = ping(app.config['node2_ip'])
+    smallest_ping = ping_instance(app.config['node2_ip'])
     n2_ping = smallest_ping
     print("n2 ping ", n2_ping)
-    n3_ping = ping(app.config['node3_ip'])
+    n3_ping = ping_instance(app.config['node3_ip'])
     if n3_ping<smallest_ping:
         smallest_ping = n3_ping
     print("n3 ping ", n3_ping)
-    n4_ping = ping(app.config['node4_ip'])
+    n4_ping = ping_instance(app.config['node4_ip'])
     if n4_ping<smallest_ping:
         smallest_ping = n4_ping
     print("n4 ping ", n4_ping)
