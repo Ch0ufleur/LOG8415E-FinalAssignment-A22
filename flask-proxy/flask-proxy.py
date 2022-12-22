@@ -5,7 +5,7 @@
 from flask import Flask
 from flask import request
 import pymysql
-from pythonping import ping
+import subprocess
 from sshtunnel import SSHTunnelForwarder
 import random
 
@@ -127,6 +127,12 @@ def randomize():
     response = app.response_class(response=do_query_random(query), status=200, mimetype='text/html')
     return response
 
+def ping(node_ip):
+    response = subprocess.run(["ping", "-c", "1", node_ip], capture_output=True)
+    output = response.stdout.decode("utf-8")
+    response_time = output.split("time=")[1].split(" ms")[0]
+    return response_time
+
 def do_query_ping(q:str):
     """
     Performs the query on the data node with the least latency
@@ -140,13 +146,18 @@ def do_query_ping(q:str):
     if 'select'!=q[0:6].lower(): # If it is not a select, then we perform on the master node
         return do_query_default(q)
 
-    response_list_n2 = ping(app.config['node2_ip'], size=40, count=2)
-    print("n2 ping ", response_list_n2.rtt_avg_ms)
-    response_list_n3 = ping(app.config['node3_ip'], size=40, count=2)
-    print("n3 ping ", response_list_n3.rtt_avg_ms)
-    response_list_n4 = ping(app.config['node4_ip'], size=40, count=2)
-    print("n4 ping ", response_list_n4.rtt_avg_ms)
-    times = {'2':response_list_n2.rtt_avg_ms, '3':response_list_n3.rtt_avg_ms, '4':response_list_n4.rtt_avg_ms}
+    smallest_ping = ping(app.config['node2_ip'])
+    n2_ping = smallest_ping
+    print("n2 ping ", n2_ping)
+    n3_ping = ping(app.config['node3_ip'])
+    if n3_ping<smallest_ping:
+        smallest_ping = n3_ping
+    print("n3 ping ", n3_ping)
+    n4_ping = ping(app.config['node4_ip'])
+    if n4_ping<smallest_ping:
+        smallest_ping = n4_ping
+    print("n4 ping ", n4_ping)
+    times = {'2':n2_ping, '3':n3_ping, '4':n4_ping}
     node = min(times, key=lambda key: times[key])
     print("selected data node ",node, " with less ping!")
     query_result = execute_forwarded_query_on_node(node,q)
