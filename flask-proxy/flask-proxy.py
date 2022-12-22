@@ -14,7 +14,7 @@ DATABASE_P = ''
 app = Flask(__name__)
 
 # https://stackoverflow.com/a/48349994/13775984
-def create_app(master_ip, node2_ip, node3_ip, node4_ip):
+def create_app(master_ip, node2_ip, node3_ip, node4_ip, proxy):
     """
     Instantiates the server app with the appropriate configuration
     
@@ -23,6 +23,7 @@ def create_app(master_ip, node2_ip, node3_ip, node4_ip):
     node2_ip: Local IP address of the second node, which is a data node
     node3_ip: Local IP address of the third node, which is a data node
     node4_ip: Local IP address of the fourth node, which is a data node
+    proxy: internal IP of the proxy
 
     Returns:
     app: The instantiated and properly configured app
@@ -31,6 +32,7 @@ def create_app(master_ip, node2_ip, node3_ip, node4_ip):
     app.config['node2_ip'] = node2_ip
     app.config['node3_ip'] = node3_ip
     app.config['node4_ip'] = node4_ip
+    app.config['proxy_ip'] = proxy
     print('Proxy configured with following IPs: master: ', app.config['master_ip'], ' node2: ', app.config['node2_ip'], ' node3: ', app.config['node3_ip'], ' node4: ', app.config['node4_ip'])
     return app
 
@@ -67,6 +69,41 @@ def default():
     response = app.response_class(response=do_query_default(query), status=200, mimetype='text/html')
     return response
 
+def do_query_random(q:str):
+    """
+    Performs the query on a random data node.
+
+    Parameters:
+    q: query to perform
+
+    Returns:
+    query_result: the result of the query
+    """
+    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
+        return do_query_default(q)
+    node_id = str(random.randInt(2,5)) # Values from 2 to 4 inclusive
+    print("selected data node ",node_id, " at random")
+    query_result = ''
+    with sshtunnel.open_tunnel(
+        (app.config['node'+node_id+'_ip'], 22),
+        ssh_username="ubuntu",
+        ssh_pkey="/home/ubuntu/standa2.pem",
+        remote_bind_address=(app.config['master_ip'], 3306)
+    ) as tunnel:
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect('127.0.0.1', 10022)
+        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(q)
+                query_result = cursor.fetchall()
+            connection.commit()
+        client.close()
+    
+    return str(query_result)
+    
 @app.route("/random", methods=['GET'])
 def random():
     """
@@ -104,48 +141,15 @@ if __name__ == '__main__':
     parser.add_argument('-n2')
     parser.add_argument('-n3')
     parser.add_argument('-n4')
+    parser.add_argument('-proxy')
     args = parser.parse_args()
     m = args.m
     n2 = args.n2
     n3 = args.n3
     n4 = args.n4
-    app = create_app(m,n2,n3,n4)
-    app.run(host='3.210.203.229')
-
-def do_query_random(q:str):
-    """
-    Performs the query on a random data node.
-
-    Parameters:
-    q: query to perform
-
-    Returns:
-    query_result: the result of the query
-    """
-    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
-        return do_query_default(q)
-    node_id = str(random.randInt(2,5)) # Values from 2 to 4 inclusive
-    print("selected data node ",node_id, " at random")
-    query_result = ''
-    with sshtunnel.open_tunnel(
-        (app.config['node'+node_id+'_ip'], 22),
-        ssh_username="ubuntu",
-        ssh_pkey="/home/ubuntu/standa2.pem",
-        remote_bind_address=(app.config['master_ip'], 3306)
-    ) as tunnel:
-        client = paramiko.SSHClient()
-        client.load_system_host_keys()
-        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        client.connect('127.0.0.1', 10022)
-        connection = pymysql.connect(host=app.config['master_ip'], user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
-        with connection:
-            with connection.cursor() as cursor:
-                cursor.execute(q)
-                query_result = cursor.fetchall()
-            connection.commit()
-        client.close()
-    
-    return str(query_result)
+    proxy = args.proxy
+    app = create_app(m,n2,n3,n4, proxy)
+    app.run(host=app.config['proxy_ip'])
 
 def do_query_ping(q:str):
     """
