@@ -5,6 +5,7 @@
 from flask import Flask
 from flask import request
 import pymysql
+from pythonping import ping
 from sshtunnel import SSHTunnelForwarder
 import random
 
@@ -69,6 +70,31 @@ def default():
     response = app.response_class(response=do_query_default(query), status=200, mimetype='text/html')
     return response
 
+def execute_forwarded_query_on_node(node_id) -> str:
+    """
+    Performs a query via the ssh tunnel on specified data node
+
+    Parameters:
+    node_id: the id to perform the query on
+
+    Return:
+    query_result: the result of the query
+    """
+    with SSHTunnelForwarder(
+        (app.config['node'+node_id+'_ip'], 22), #Connecting to the chosen data node
+        ssh_username="ubuntu",
+        ssh_pkey="/home/ubuntu/standa2.pem",
+        remote_bind_address=(app.config['master_ip'], 3306) #Binding to the mysql engine on the master node
+    ) as tunnel:
+    #Performing the request
+        connection = pymysql.connect(host='127.0.0.1', port=tunnel.local_bind_port, user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)
+        with connection:
+            with connection.cursor() as cursor:
+                cursor.execute(q)
+                query_result = cursor.fetchall()
+            connection.commit()
+    return query_result
+
 def do_query_random(q:str):
     """
     Performs the query on a random data node.
@@ -83,20 +109,7 @@ def do_query_random(q:str):
         return do_query_default(q)
     node_id = str(random.randint(2,4)) # Values from 2 to 4 inclusive
     print("selected data node ",node_id, " at random")
-    query_result = ''
-    with SSHTunnelForwarder(
-        (app.config['node'+node_id+'_ip'], 22),
-        ssh_username="ubuntu",
-        ssh_pkey="/home/ubuntu/standa2.pem",
-        remote_bind_address=(app.config['master_ip'], 3306)
-    ) as tunnel:
-        connection = pymysql.connect(host=app.config['master_ip'], port=tunnel.local_bind_port, user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor)#, bind_address=app.config['master_ip'])
-        with connection:
-            with connection.cursor() as cursor:
-                cursor.execute(q)
-                query_result = cursor.fetchall()
-            connection.commit()
-    
+    query_result = execute_forwarded_query_on_node(node_id)
     return str(query_result)
 
 @app.route("/random", methods=['GET'])
@@ -113,6 +126,31 @@ def randomize():
     print(query)
     response = app.response_class(response=do_query_random(query), status=200, mimetype='text/html')
     return response
+
+def do_query_ping(q:str):
+    """
+    Performs the query on the data node with the least latency
+
+    Parameters:
+    q: query to perform
+
+    Returns:
+    query_result: the result of the query
+    """
+    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
+        return do_query_default(q)
+
+    response_list_n2 = ping(app.config['node2_ip'], size=40, count=2)
+    print("n2 ping ", response_list_n2.rtt_avg_ms)
+    response_list_n3 = ping(app.config['node3_ip'], size=40, count=2)
+    print("n3 ping ", response_list_n3.rtt_avg_ms)
+    response_list_n4 = ping(app.config['node4_ip'], size=40, count=2)
+    print("n4 ping ", response_list_n4.rtt_avg_ms)
+    times = {'2':response_list_n2.rtt_avg_ms, '3':response_list_n3.rtt_avg_ms, '4':response_list_n4.rtt_avg_ms}
+    node = min(times, key=lambda key: times[key])
+    print("selected data node ",node, " with less ping!")
+    query_result = execute_forwarded_query_on_node(node)
+    return str(query_result)
 
 @app.route("/ping", methods=['GET'])
 def ping():
@@ -145,26 +183,3 @@ if __name__ == '__main__':
     proxy = args.proxy
     app = create_app(m,n2,n3,n4, proxy)
     app.run(host=app.config['proxy_ip'])
-
-def do_query_ping(q:str):
-    """
-    Performs the query on the data node with the least latency
-
-    Parameters:
-    q: query to perform
-
-    Returns:
-    query_result: the result of the query
-    """
-    if 'select'!=q[0:6].lower: # If it is not a select, then we perform on the master node
-        return do_query_default(q)
-    server = SSHTunnelForwarder(
-        'alfa.8iq.dev',
-        ssh_username="pahaz",
-        ssh_password="secret",
-        remote_bind_address=('127.0.0.1', 8080)
-    )
-    connection = pymysql.connect(host=select_minimal_ping(), user='finaltp', password='', database='sakila', charset='utf8mb4', bind_address=tunnel-ip)
-    with connection:
-        with connection.cursor() as cursor:
-            a
