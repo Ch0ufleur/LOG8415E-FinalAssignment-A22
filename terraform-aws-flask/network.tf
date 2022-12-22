@@ -52,7 +52,7 @@ resource "aws_security_group" "proxy" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["184.162.247.112/32"]
+    cidr_blocks = ["184.145.237.132/32"]
   }
   
   ingress {
@@ -79,19 +79,40 @@ resource "aws_security_group" "final_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["184.162.247.112/32"]
+    cidr_blocks = ["184.145.237.132/32"]
+  }
+  
+  ingress {
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["10.0.0.0/8"]
   }
   
   ingress {
     from_port   = 3306
     to_port     = 3306
     protocol    = "tcp"
-    cidr_blocks = ["184.162.247.112/32"]
+    cidr_blocks = ["184.145.237.132/32"]
   }
   
   ingress {
     from_port   = 3306
     to_port     = 3306
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 30000
+    to_port     = 65534
+    protocol    = "tcp"
+    cidr_blocks = ["10.0.0.0/8"]
+  }
+  
+  ingress {
+    from_port   = 3316
+    to_port     = 3316
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/8"]
   }

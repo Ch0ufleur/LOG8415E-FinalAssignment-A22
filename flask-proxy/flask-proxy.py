@@ -110,7 +110,7 @@ if __name__ == '__main__':
     n3 = args.n3
     n4 = args.n4
     app = create_app(m,n2,n3,n4)
-    app.run(debug=True)
+    app.run(host='3.210.203.229')
 
 def do_query_random(q:str):
     """
