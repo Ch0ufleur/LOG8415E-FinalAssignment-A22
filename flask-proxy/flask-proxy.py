@@ -70,7 +70,7 @@ def default():
     response = app.response_class(response=do_query_default(query), status=200, mimetype='text/html')
     return response
 
-def execute_forwarded_query_on_node(node_id) -> str:
+def execute_forwarded_query_on_node(node_id, q) -> str:
     """
     Performs a query via the ssh tunnel on specified data node
 
@@ -109,7 +109,7 @@ def do_query_random(q:str):
         return do_query_default(q)
     node_id = str(random.randint(2,4)) # Values from 2 to 4 inclusive
     print("selected data node ",node_id, " at random")
-    query_result = execute_forwarded_query_on_node(node_id)
+    query_result = execute_forwarded_query_on_node(node_id,q)
     return str(query_result)
 
 @app.route("/random", methods=['GET'])
@@ -149,7 +149,7 @@ def do_query_ping(q:str):
     times = {'2':response_list_n2.rtt_avg_ms, '3':response_list_n3.rtt_avg_ms, '4':response_list_n4.rtt_avg_ms}
     node = min(times, key=lambda key: times[key])
     print("selected data node ",node, " with less ping!")
-    query_result = execute_forwarded_query_on_node(node)
+    query_result = execute_forwarded_query_on_node(node,q)
     return str(query_result)
 
 @app.route("/ping", methods=['GET'])
