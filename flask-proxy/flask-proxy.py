@@ -90,7 +90,7 @@ def do_query_random(q:str):
         ssh_pkey="/home/ubuntu/standa2.pem",
         remote_bind_address=(app.config['master_ip'], 3306)
     ) as tunnel:
-        connection = pymysql.connect(host=app.config['master_ip'], port=tunnel.local_bind_port, user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
+        connection = pymysql.connect(host='127.0.0.1', port=tunnel.local_bind_port, user='finaltp', password='', database='sakila', charset='utf8mb4', cursorclass=pymysql.cursors.DictCursor, bind_address=app.config['master_ip'])
         with connection:
             with connection.cursor() as cursor:
                 cursor.execute(q)
