@@ -1,4 +1,4 @@
-# LOG8415E - Assignment 1
+# LOG8415E - Assignment Final
 # main.tf
 # Terraform configuration relative to core providers and terraform initialization
 

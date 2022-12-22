@@ -128,6 +128,15 @@ def randomize():
     return response
 
 def ping_instance(node_ip):
+    """
+    Pings an instance and returns the response time
+
+    Parameters:
+    node_ip: ip of the node to ping
+
+    Returns
+    response_time: response time after doing the ping command
+    """
     response = subprocess.run(["ping", "-c", "1", node_ip], capture_output=True)
     output = response.stdout.decode("utf-8")
     response_time = output.split("time=")[1].split(" ms")[0]

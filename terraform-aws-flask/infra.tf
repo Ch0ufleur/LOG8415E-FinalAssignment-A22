@@ -1,4 +1,4 @@
-# LOG8415E - Assignment 1
+# LOG8415E - Assignment Final
 # infra.tf
 # Terraform configuration relative to instance definitions
 
